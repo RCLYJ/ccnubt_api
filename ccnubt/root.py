@@ -1,8 +1,8 @@
 # coding:utf-8
 from flask import Blueprint, jsonify, request, abort
-from .model import User, Reservation
+from .model import User, Reservation, Activity
 from flask_login import login_required, login_user, current_user
-import json, os, hashlib
+import json, os, hashlib, datetime
 from . import store, db
 bp = Blueprint('root', __name__, url_prefix='/root')
 
@@ -127,4 +127,33 @@ def root_reservation():
     return jsonify({
         "result_code": 1,
         "reservations": r_data
+    })
+
+
+@bp.route('new_activity/', methods=['POST'])
+@login_required
+def root_add_activity():
+    json_data = json.loads(request.data)
+    print(json_data)
+    try:
+        title = json_data.get("title")
+        content = json_data.get("content")
+        start_time = json_data.get("start_time")
+        end_time = json_data.get("end_time")
+        pos = json_data.get("pos")
+    except:
+        abort(404)
+    a = Activity()
+    a.title = title
+    a.content = content
+    a.pos = pos
+    a.start_time = datetime.datetime.utcfromtimestamp(start_time/1000)
+    a.end_time = datetime.datetime.utcfromtimestamp(end_time/1000)
+    try:
+        db.session.add(a)
+        db.session.commit()
+    except:
+        abort(500)
+    return jsonify({
+        "result_code": 1
     })

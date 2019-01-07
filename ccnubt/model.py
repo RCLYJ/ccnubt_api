@@ -77,3 +77,12 @@ class Reservation(db.Model):
     evaluation = db.Column(db.Text, nullable=True)
     solved = db.Column(db.Boolean, default=False)
 
+
+class Activity(db.Model):
+    __table_name__ = 'activities'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time  =db.Column(db.DateTime, nullable=False)
+    pos = title = db.Column(db.String(64), nullable=True)
+    title = db.Column(db.String(64), nullable=False)
+    content = db.Column(db.Text, nullable=False)
