@@ -1,7 +1,7 @@
 # coding: utf-8
 from flask import jsonify, request, json, abort
 from flask_login import login_required, current_user
-from ..model import Reservation, User
+from ..model import Reservation, User, Activity
 from .. import db
 from datetime import datetime
 from . import bp
@@ -151,5 +151,21 @@ def my_reservation():
         "reservations": r_data
     })
 
-
-
+@bp.route('activity/')
+@login_required
+def activity():
+    now = datetime.utcnow()
+    a = Activity.query.filter(Activity.end_time >= now).order_by("-id").all()
+    acs = []
+    for t in a:
+        acs.append({
+            "title": t.title,
+            "start_time": t.start_time,
+            "end_time": t.end_time,
+            "content": t.content,
+            "pos": t.pos
+        })
+    return jsonify({
+        "result_code": 1,
+        "activities": acs
+    })

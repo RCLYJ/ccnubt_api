@@ -2,7 +2,8 @@
 from flask import Blueprint, jsonify, request, abort
 from .model import User, Reservation, Activity
 from flask_login import login_required, login_user, current_user
-import json, os, hashlib, datetime
+import json, os, hashlib
+from datetime import datetime
 from . import store, db
 bp = Blueprint('root', __name__, url_prefix='/root')
 
@@ -133,6 +134,8 @@ def root_reservation():
 @bp.route('new_activity/', methods=['POST'])
 @login_required
 def root_add_activity():
+    if current_user.role != 10:
+        abort(403)
     json_data = json.loads(request.data)
     print(json_data)
     try:
@@ -141,19 +144,62 @@ def root_add_activity():
         start_time = json_data.get("start_time")
         end_time = json_data.get("end_time")
         pos = json_data.get("pos")
+        id = json_data.get('id')
     except:
         abort(404)
-    a = Activity()
+    if id:
+        a = Activity.query.filter_by(id=id).first()
+    else:
+        a = Activity()
     a.title = title
     a.content = content
     a.pos = pos
-    a.start_time = datetime.datetime.utcfromtimestamp(start_time/1000)
-    a.end_time = datetime.datetime.utcfromtimestamp(end_time/1000)
+    a.start_time = datetime.utcfromtimestamp(start_time/1000)
+    a.end_time = datetime.utcfromtimestamp(end_time/1000)
     try:
         db.session.add(a)
         db.session.commit()
     except:
+        db.session.rollback()
         abort(500)
     return jsonify({
         "result_code": 1
+    })
+
+@bp.route('activity/del/<int:id>/')
+@login_required
+def root_del_activity(id):
+    if current_user.role != 10:
+        abort(403)
+    a = Activity.query.filter_by(id=id).first()
+    if not a:
+        abort(404)
+    try:
+        db.session.delete(a)
+        db.session.commit()
+    except:
+        db.session.rollback()
+        abort(500)
+    return jsonify({
+        "result_code": 1
+    })
+
+@bp.route('activity/')
+@login_required
+def activity():
+    now = datetime.utcnow()
+    a = Activity.query.order_by("-id").all()
+    acs = []
+    for t in a:
+        acs.append({
+            "title": t.title,
+            "start_time": t.start_time,
+            "end_time": t.end_time,
+            "content": t.content,
+            "pos": t.pos,
+            "id": t.id
+        })
+    return jsonify({
+        "result_code": 1,
+        "activities": acs
     })
