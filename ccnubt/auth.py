@@ -1,8 +1,8 @@
 # coding:utf-8
 from flask import Blueprint, jsonify, request, abort
 import json, requests, hashlib, datetime
-from .model import User
-from . import db, store
+from .model import User, db
+from . import store
 from wsgi import app
 from flask_login import login_required, login_user, current_user
 
@@ -25,8 +25,8 @@ def login():
     except:
         resp_data['err_msg'] = 'cant loads code'
         return jsonify(resp_data)
-    appid = 'wxc48512bec9cdd899'
-    secret = '7706006289fe3fa21f00fffa53a8e851'
+    appid = app.config.get('APPID')
+    secret = app.config.get('SECRET')
     url = "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code"
     url = url % (appid, secret, json_code)
     try:
@@ -41,7 +41,6 @@ def login():
 
     user = User.query.filter_by(openid=openid).first()
     api_key = hashlib.md5(key.encode('utf-8')).hexdigest()
-    # print(api_key)
     store.set(api_key, openid, 60*60*24*2)
 
     if not user :

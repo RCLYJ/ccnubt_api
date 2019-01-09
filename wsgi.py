@@ -1,6 +1,7 @@
 from flask import Flask
-from ccnubt import db, login_manager
+from ccnubt import  login_manager
 from config import config
+from ccnubt.model import db
 
 app = Flask(__name__)
 

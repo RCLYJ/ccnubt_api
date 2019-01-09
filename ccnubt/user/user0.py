@@ -1,11 +1,10 @@
 # coding: utf-8
 from flask import jsonify, request, json, abort
 from flask_login import login_required, current_user
-from ..model import Reservation, User, Activity
-from .. import db
+from ..model import Reservation, User, Activity, db
 from datetime import datetime
 from . import bp
-from sqlalchemy import and_
+from sqlalchemy import and_, desc
 
 
 # status: -1取消 0待接单 1已接单 2维修中 3维修完成 4失败 5已确认，待评价 6结束
@@ -24,6 +23,7 @@ def new_reservation():
     r = Reservation()
     r.user_id = current_user.id
     r.detail = json_data.get("detail")
+    r.formid = json_data.get("formid")
     r.status = 0
     try:
         db.session.add(r)
@@ -122,7 +122,7 @@ def evaluate_reservation(rid):
 @login_required
 def my_reservation():
     id = current_user.id
-    rs = db.session.query(Reservation).filter_by(user_id=id).order_by('-id').all()
+    rs = db.session.query(Reservation).filter_by(user_id=id).order_by(desc(Reservation.id)).all()
     r_data = []
 
     for r in rs:
@@ -155,7 +155,7 @@ def my_reservation():
 @login_required
 def activity():
     now = datetime.utcnow()
-    a = Activity.query.filter(Activity.end_time >= now).order_by("-id").all()
+    a = Activity.query.filter(Activity.end_time >= now).order_by(desc(Activity.id)).all()
     acs = []
     for t in a:
         acs.append({

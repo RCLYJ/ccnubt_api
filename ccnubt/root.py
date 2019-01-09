@@ -1,10 +1,10 @@
 # coding:utf-8
 from flask import Blueprint, jsonify, request, abort
-from .model import User, Reservation, Activity
+from .model import User, Reservation, Activity,db
 from flask_login import login_required, login_user, current_user
 import json, os, hashlib
 from datetime import datetime
-from . import store, db
+from . import store
 bp = Blueprint('root', __name__, url_prefix='/root')
 
 
@@ -13,7 +13,6 @@ def root_login():
     json_data = json.loads(request.data)
     username = json_data.get('username')
     password = json_data.get('password')
-
     u = User.query.filter_by(openid=username).first()
     if not u or u.api_key != password or u.role != 10:
         abort(403)

@@ -1,8 +1,9 @@
 # coding: utf-8
-from . import db, login_manager, store
+from . import login_manager, store
 from flask_login import UserMixin
 from datetime import datetime
-
+from  flask_sqlalchemy import SQLAlchemy
+db = SQLAlchemy()
 
 '''
 用户信息
@@ -76,6 +77,7 @@ class Reservation(db.Model):
     score = db.Column(db.Integer, default=0, nullable=True)
     evaluation = db.Column(db.Text, nullable=True)
     solved = db.Column(db.Boolean, default=False)
+    formid = db.Column(db.String(32), nullable=True)
 
 
 class Activity(db.Model):

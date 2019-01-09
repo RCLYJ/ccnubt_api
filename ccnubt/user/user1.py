@@ -1,9 +1,11 @@
 # coding: utf-8
 from flask import jsonify, abort
 from flask_login import login_required, current_user
-from ..model import Reservation, User
-from .. import db
+from ..model import Reservation, User, db
 from . import bp
+from concurrent.futures import ThreadPoolExecutor
+from .send_msg import send_msg
+from sqlalchemy import desc
 
 # 队员
 # 接单status=1
@@ -24,6 +26,9 @@ def order(rid):
         db.session.commit()
     except:
         abort(500)
+    with ThreadPoolExecutor(1) as executor:
+        t = executor.submit(send_msg, rid=rid)
+        print(t.result())
     return jsonify({
         "result_code": 1,
         "err_msg": "sucess"
@@ -134,7 +139,7 @@ def unerder_reservations():
 def my_ordered_reservation():
     if current_user.role < 1:
         abort(403)
-    rs = db.session.query(Reservation).filter_by(bt_user_id=current_user.id).order_by('-id').all()
+    rs = db.session.query(Reservation).filter_by(bt_user_id=current_user.id).order_by(desc(Reservation.id)).all()
     r_data = []
 
     for r in rs:
