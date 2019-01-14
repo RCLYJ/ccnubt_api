@@ -6,6 +6,8 @@ from . import bp
 from concurrent.futures import ThreadPoolExecutor
 from .send_msg import send_msg
 from sqlalchemy import desc
+import random
+from .. import store
 
 # 队员
 # 接单status=1
@@ -164,4 +166,18 @@ def my_ordered_reservation():
     return jsonify({
         "result_code": 1,
         "reservations": r_data
+    })
+
+
+@bp.route('mycode/')
+def my_code():
+    if current_user.role != 1:
+        abort(403)
+    code = "".join(random.sample("0123456789", 6))
+    store.set(code, current_user.id, 60*5)
+    if current_user.role != 1:
+        abort(403)
+    return jsonify({
+        "result_code": 1,
+        "code": code
     })
