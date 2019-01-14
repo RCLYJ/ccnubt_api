@@ -168,7 +168,7 @@ def my_ordered_reservation():
         "reservations": r_data
     })
 
-
+# 生成接单码
 @bp.route('mycode/')
 def my_code():
     if current_user.role != 1:
@@ -177,6 +177,24 @@ def my_code():
     store.set(code, current_user.id, 60*5)
     if current_user.role != 1:
         abort(403)
+    return jsonify({
+        "result_code": 1,
+        "code": code
+    })
+
+
+@bp.route('transfer/<int:id>/')
+def transfer(id):
+    u = current_user
+    id = int(id)
+    if u.role != 1:
+        abort(403)
+    r = Reservation.query.filter_by(id=id).first()
+    print(id)
+    if not r or r.bt_user_id != u.id:
+        abort(404)
+    code = "".join(random.sample("0123456789", 8))
+    store.set(code, r.id, 60 * 5)
     return jsonify({
         "result_code": 1,
         "code": code
