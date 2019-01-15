@@ -1,5 +1,5 @@
 # coding: utf-8
-from flask import jsonify, abort
+from flask import jsonify, abort, request
 from flask_login import login_required, current_user
 from ..model import Reservation, User, db
 from . import bp
@@ -171,6 +171,10 @@ def my_ordered_reservation():
 # 生成接单码
 @bp.route('mycode/')
 def my_code():
+    code = request.args.get("code")
+    # print(code)
+    if code:
+        store.delete(code)
     if current_user.role != 1:
         abort(403)
     code = "".join(random.sample("0123456789", 6))
