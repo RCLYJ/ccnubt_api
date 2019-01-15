@@ -177,7 +177,7 @@ def my_code():
         store.delete(code)
     if current_user.role != 1:
         abort(403)
-    code = "".join(random.sample("0123456789", 6))
+    code = "".join(random.sample("123456789", 6))
     store.set(code, current_user.id, 60*5)
     if current_user.role != 1:
         abort(403)
@@ -197,7 +197,7 @@ def transfer(id):
     print(id)
     if not r or r.bt_user_id != u.id:
         abort(404)
-    code = "".join(random.sample("0123456789", 8))
+    code = "".join(random.sample("0123456789", 7))
     store.set(code, r.id, 60 * 5)
     return jsonify({
         "result_code": 1,
@@ -211,10 +211,10 @@ def receive():
     if u.role != 1:
         abort(403)
     code = request.args.get("code")
-    rid = int(store.get(code))
+    rid = store.get(code)
     if not code or not rid:
         abort(404)
-    r = Reservation.query.filter_by(id=rid).first()
+    r = Reservation.query.filter_by(id=int(rid)).first()
     r.bt_user_id = u.id
     try:
         db.session.add(r)
