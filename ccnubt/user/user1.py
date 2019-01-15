@@ -203,3 +203,25 @@ def transfer(id):
         "result_code": 1,
         "code": code
     })
+
+
+@bp.route('receive/')
+def receive():
+    u = current_user
+    if u.role != 1:
+        abort(403)
+    code = request.args.get("code")
+    rid = int(store.get(code))
+    if not code or not rid:
+        abort(404)
+    r = Reservation.query.filter_by(id=rid).first()
+    r.bt_user_id = u.id
+    try:
+        db.session.add(r)
+        db.session.commit()
+    except:
+        db.session.rollback()
+        abort(500)
+    return jsonify({
+        "result_code": 1
+    })

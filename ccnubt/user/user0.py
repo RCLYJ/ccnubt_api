@@ -5,7 +5,8 @@ from ..model import Reservation, User, Activity, db
 from datetime import datetime
 from . import bp
 from sqlalchemy import and_, desc
-
+from ccnubt import store
+import random
 
 # status: -1取消 0待接单 1已接单 2维修中 3维修完成 4失败 5已确认，待评价 6结束
 @bp.route('reserve/', methods=['POST'])
@@ -168,4 +169,53 @@ def activity():
     return jsonify({
         "result_code": 1,
         "activities": acs
+    })
+
+
+@bp.route('reservecode/', methods=['GET', 'POST'])
+def reserve_code():
+    if request.method == 'POST':
+        json_data = json.loads(request.data)
+        code = json_data.get("code")
+        detail = json_data.get("detail")
+        if not code:
+            abort(404)
+        bt_uid = store.get(code)
+        if not bt_uid:
+            abort(404)
+        bt_uid = int(bt_uid)
+        r = Reservation()
+        r.status = 1
+        r.bt_user_id = bt_uid
+        r.detail = detail
+        r.user_id = current_user.id
+        try:
+            db.session.add(r)
+            db.session.commit()
+        except:
+            db.session.rollback()
+            abort(500)
+        return jsonify({
+            "result_code": 1
+        })
+    code = request.args.get("code")
+    if not code:
+        abort(404)
+    bt_uid = store.get(code)
+    if not bt_uid:
+        abort(404)
+    bt_uid = int(bt_uid)
+    bu = User.query.filter_by(id=bt_uid).first()
+    if not bu:
+        abort(404)
+    store.delete(code)
+    code = "".join(random.sample('qwertyuioplkjhgfdsazxcvbnm',8))
+    store.set(code, current_user.id, 60*60)
+    return jsonify({
+        "result_code": 1,
+        "code": code,
+        "bt_info":{
+            "name": bu.name,
+            "sex": bu.sex
+        }
     })
