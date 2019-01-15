@@ -30,7 +30,7 @@ def order(rid):
         abort(500)
     with ThreadPoolExecutor(1) as executor:
         t = executor.submit(send_msg, rid=rid)
-        print(t.result())
+        # print(t.result())
     return jsonify({
         "result_code": 1,
         "err_msg": "sucess"
@@ -194,7 +194,7 @@ def transfer(id):
     if u.role != 1:
         abort(403)
     r = Reservation.query.filter_by(id=id).first()
-    print(id)
+    # print(id)
     if not r or r.bt_user_id != u.id:
         abort(404)
     code = "".join(random.sample("0123456789", 7))

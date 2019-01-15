@@ -17,7 +17,7 @@ def root_login():
     if not u or u.api_key != password or u.role != 10:
         abort(403)
     api_key = hashlib.md5(os.urandom(64)).hexdigest()
-    print(api_key)
+    # print(api_key)
     store.set(api_key, username)
     return jsonify({
         "result_code": 1,
@@ -74,7 +74,7 @@ def auth_role():
         abort(403)
     id = request.args.get('id')
     role = request.args.get('role')
-    print(id, role)
+    # print(id, role)
     if not id or not role:
         abort(404)
     u = User.query.filter_by(id=id).first()
@@ -136,7 +136,7 @@ def root_add_activity():
     if current_user.role != 10:
         abort(403)
     json_data = json.loads(request.data)
-    print(json_data)
+    # print(json_data)
     try:
         title = json_data.get("title")
         content = json_data.get("content")
