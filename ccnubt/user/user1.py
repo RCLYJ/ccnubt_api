@@ -235,7 +235,7 @@ def summary():
     rs = db.session.query(sub.c.bt_user_id, User.name,func.count('*'), func.avg(sub.c.score)).\
         join(User, User.id==sub.c.bt_user_id).\
         group_by(User.id).all()
-    # print(rs)
+    print(rs)
     data = []
     m = 0
     for r in rs:
@@ -243,9 +243,9 @@ def summary():
     for r in rs:
         data.append({
             "name": r[1],
-            "avg_score": round(r[3],2),
+            "avg_score": round(float(r[3]),2),
             "count": r[2],
-            "score": round(r[2]/(1+m)*50 + r[3]*10, 2)
+            "score": round(r[2]/(1+m)*50 + float(r[3])*10.0, 2)
         })
     if data:
         data.sort(key=lambda obj: (obj.get("score")),reverse=True)

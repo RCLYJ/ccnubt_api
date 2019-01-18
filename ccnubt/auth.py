@@ -41,7 +41,7 @@ def login():
 
     user = User.query.filter_by(openid=openid).first()
     api_key = hashlib.md5(key.encode('utf-8')).hexdigest()
-    store.set(api_key, openid, 60*60*24*2)
+    store.set(api_key, openid, 60*60*5)
 
     if not user :
         user = User()
