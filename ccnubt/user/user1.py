@@ -5,9 +5,10 @@ from ..model import Reservation, User, db
 from . import bp
 from concurrent.futures import ThreadPoolExecutor
 from .send_msg import send_msg
-from sqlalchemy import desc, text
+from sqlalchemy import desc,  func, and_
 import random
 from .. import store
+from datetime import datetime
 
 # 队员
 # 接单status=1
@@ -228,24 +229,26 @@ def receive():
 
 @bp.route('summary/')
 def summary():
-    sql='''SELECT \
-        users.name AS name, 
-        ROUND(avg(reservations.score),2) AS score,
-        count(*) as cnt
-        FROM reservations 
-        JOIN users on users.id=reservations.bt_user_id
-        GROUP BY users.name
-        ORDER BY score DESC;
-        '''
-    rs = db.session.execute(text(sql)).fetchall()
+    today = datetime.today()
+    first_day = datetime(today.year, today.month, 1, 0, 0, 0)
+    sub = db.session.query(Reservation).filter(and_(Reservation.create_time>=first_day, Reservation.status==6)).subquery()
+    rs = db.session.query(sub.c.bt_user_id, User.name,func.count('*'), func.avg(sub.c.score)).\
+        join(User, User.id==sub.c.bt_user_id).\
+        group_by(User.id).all()
+    # print(rs)
     data = []
+    m = 0
+    for r in rs:
+         m = max(m, r[2])
     for r in rs:
         data.append({
-            "name": r[0],
-            "score": r[1],
-            "count": r[2]
+            "name": r[1],
+            "avg_score": round(r[3],2),
+            "count": r[2],
+            "score": round(r[2]/(1+m)*50 + r[3]*10, 2)
         })
-
+    if data:
+        data.sort(key=lambda obj: (obj.get("score")),reverse=True)
     return jsonify({
         "result_code": 1,
         "data": data
