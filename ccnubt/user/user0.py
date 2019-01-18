@@ -214,7 +214,7 @@ def reserve_code():
     return jsonify({
         "result_code": 1,
         "code": code,
-        "bt_info":{
+        "bt_info": {
             "name": bu.name,
             "sex": bu.sex
         }

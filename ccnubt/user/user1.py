@@ -5,7 +5,7 @@ from ..model import Reservation, User, db
 from . import bp
 from concurrent.futures import ThreadPoolExecutor
 from .send_msg import send_msg
-from sqlalchemy import desc
+from sqlalchemy import desc, text
 import random
 from .. import store
 
@@ -224,4 +224,29 @@ def receive():
         abort(500)
     return jsonify({
         "result_code": 1
+    })
+
+@bp.route('summary/')
+def summary():
+    sql='''SELECT \
+        users.name AS name, 
+        ROUND(avg(reservations.score),2) AS score,
+        count(*) as cnt
+        FROM reservations 
+        JOIN users on users.id=reservations.bt_user_id
+        GROUP BY users.name
+        ORDER BY score DESC;
+        '''
+    rs = db.session.execute(text(sql)).fetchall()
+    data = []
+    for r in rs:
+        data.append({
+            "name": r[0],
+            "score": r[1],
+            "count": r[2]
+        })
+
+    return jsonify({
+        "result_code": 1,
+        "data": data
     })
