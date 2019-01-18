@@ -210,7 +210,7 @@ def reserve_code():
         abort(404)
     store.delete(code)
     code = "".join(random.sample('qwertyuioplkjhgfdsazxcvbnm',8))
-    store.set(code, current_user.id, 60*60)
+    store.set(code, bt_uid, 60*60)
     return jsonify({
         "result_code": 1,
         "code": code,
