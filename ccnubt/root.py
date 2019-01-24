@@ -6,6 +6,7 @@ import json, os, hashlib
 from datetime import datetime
 from . import store
 bp = Blueprint('root', __name__, url_prefix='/root')
+from sqlalchemy import desc
 
 
 @bp.route('login/', methods=['POST'])
@@ -30,10 +31,7 @@ def root_login():
 @login_required
 def root_user():
     if current_user.role != 10:
-        return {
-            "result_code": -1,
-            "err_msg": 'permission denied'
-        }
+        abort(403)
     users = User.query.filter(User.role != 10).all()
     user_list = []
     for u in users:
@@ -92,7 +90,7 @@ def auth_role():
 def root_reservation():
     if current_user.role != 10:
         abort(403)
-    rs = db.session.query(Reservation).all()
+    rs = db.session.query(Reservation).order_by(desc(Reservation.id)).all()
     r_data = []
 
     for r in rs:
@@ -187,7 +185,7 @@ def root_del_activity(id):
 @login_required
 def activity():
     now = datetime.utcnow()
-    a = Activity.query.order_by("-id").all()
+    a = Activity.query.order_by(desc(Activity.start_time)).all()
     acs = []
     for t in a:
         acs.append({

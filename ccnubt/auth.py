@@ -134,7 +134,8 @@ def test():
 @app.errorhandler(403)
 def err403(e):
     return jsonify({
-        "result_code": 403
+        "result_code": 403,
+        "err_msg": "permission denied"
     })
 
 @app.errorhandler(405)
