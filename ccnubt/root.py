@@ -5,8 +5,10 @@ from flask_login import login_required, login_user, current_user
 import json, os, hashlib
 from datetime import datetime
 from . import store
+import time
+
 bp = Blueprint('root', __name__, url_prefix='/root')
-from sqlalchemy import desc
+from sqlalchemy import desc, and_, func
 
 
 @bp.route('login/', methods=['POST'])
@@ -200,3 +202,41 @@ def activity():
         "result_code": 1,
         "activities": acs
     })
+
+@bp.route('summary/')
+@login_required
+def root_summary():
+    try:
+        d_from = request.args.get('from')
+        d_to = request.args.get('to')
+        first_day = datetime.fromtimestamp(int(d_from)//1000)
+        last_day = datetime.fromtimestamp(int(d_to)//1000)
+    except:
+        abort(403)
+
+    sub = db.session.query(Reservation).filter(
+        and_(Reservation.create_time >= first_day, Reservation.create_time<=last_day,Reservation.status == 6)).subquery()
+    rs = db.session.query(sub.c.bt_user_id, User.name, func.count('*'), func.avg(sub.c.score)). \
+        join(User, User.id == sub.c.bt_user_id). \
+        group_by(User.id).all()
+
+    data = []
+    m = 0
+    for r in rs:
+        m = max(m, r[2])
+    for r in rs:
+        data.append({
+            "name": r[1],
+            "avg_score": round(float(r[3]), 2),
+            "count": r[2],
+            "score": round(r[2] / (1 + m) * 50 + float(r[3]) * 10.0, 2)
+        })
+    if data:
+        data.sort(key=lambda obj: (obj.get("score")), reverse=True)
+    return jsonify({
+        "result_code": 1,
+        "data": data
+    })
+
+
+
