@@ -92,10 +92,23 @@ def auth_role():
 def root_reservation():
     if current_user.role != 10:
         abort(403)
-    rs = db.session.query(Reservation).order_by(desc(Reservation.id)).all()
+    try:
+        page = int(request.args.get('page'))
+    except:
+        page = 1
+    try:
+        d_from = datetime.fromtimestamp(int(request.args.get("from"))//1000)
+        d_to = datetime.fromtimestamp(int(request.args.get("to"))//1000)
+    except:
+        d_from = datetime.fromtimestamp(0)
+        d_to = datetime.now()
+    pagesize = 15
+    rs = Reservation.query.filter(and_(Reservation.create_time>=d_from, Reservation.create_time<=d_to))
+    rs_data = rs.order_by(desc(Reservation.id)).limit(pagesize).offset(pagesize*(page-1)).all()
+    total = rs.count()
     r_data = []
-
-    for r in rs:
+    print(rs_data)
+    for r in rs_data:
         u = User.query.filter_by(id=r.user_id).first()
         info = {
             "name": u.name,
@@ -124,9 +137,11 @@ def root_reservation():
             "user_info": info,
             "bt_user_info": bt_info
         })
+    # time.sleep(3)
     return jsonify({
         "result_code": 1,
-        "reservations": r_data
+        "reservations": r_data,
+        "total": total
     })
 
 
@@ -220,6 +235,7 @@ def root_summary():
         join(User, User.id == sub.c.bt_user_id). \
         group_by(User.id).all()
 
+    # time.sleep(3)
     data = []
     m = 0
     for r in rs:
