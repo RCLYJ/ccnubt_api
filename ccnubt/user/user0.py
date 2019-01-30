@@ -8,7 +8,7 @@ from sqlalchemy import and_, desc
 from ccnubt import store
 import random
 
-# status: -1取消 0待接单 1已接单 2维修中 3维修完成 4失败 5已确认，待评价 6结束
+# status: 0取消 1待接单 2已接单 3维修中 4完成，待确认 5已确认，待评价 6结束
 @bp.route('reserve/', methods=['POST'])
 @login_required
 def new_reservation():
@@ -25,7 +25,7 @@ def new_reservation():
     r.user_id = current_user.id
     r.detail = json_data.get("detail")
     r.formid = json_data.get("formid")
-    r.status = 0
+    r.status = 1
     try:
         db.session.add(r)
         db.session.commit()
@@ -40,19 +40,19 @@ def new_reservation():
         "msg": "sucess"
     })
 
-# 取消订单 status=-1
+# 取消订单 status=0
 @bp.route('cancel/<int:rid>/')
 @login_required
 def cancel_reservation(rid):
     r = Reservation.query.filter_by(id=rid).first()
     if not r or r.user_id != current_user.id:
         abort(403)
-    if r.status > 1:
+    if r.status != 1:
         return jsonify({
             "result_coe": -1,
             "err_msg": "can not cancel"
         })
-    r.status = -1
+    r.status = 0
     db.session.add(r)
     db.session.commit()
     return jsonify({
@@ -67,7 +67,7 @@ def confirm_reservation(rid):
     r = Reservation.query.filter_by(id=rid).first()
     if not r or r.user_id != current_user.id:
         abort(403)
-    if r.status not in (3,4):
+    if r.status != 4:
         return jsonify({
             "result_coe": -1,
             "err_msg": "can not confirm"

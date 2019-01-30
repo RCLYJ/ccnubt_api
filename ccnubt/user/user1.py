@@ -10,8 +10,10 @@ import random
 from .. import store
 from datetime import datetime
 
+
 # 队员
-# 接单status=1
+# status: 0取消 1待接单 2已接单 3维修中 4完成，待确认 5已确认，待评价 6结束
+# 接单status=2
 @bp.route('order/<int:rid>/')
 @login_required
 def order(rid):
@@ -21,9 +23,9 @@ def order(rid):
     if not r:
         abort(404)
     r.bt_user_id = current_user.id
-    if r.status != 0:
+    if r.status != 1:
         return jsonify({"result_code": -1, "err_msg": "current status err"})
-    r.status = 1
+    r.status = 2
     try:
         db.session.add(r)
         db.session.commit()
@@ -38,7 +40,7 @@ def order(rid):
     })
 
 
-# 维修status=2
+# 维修status=3
 @bp.route('repair/<int:rid>/')
 @login_required
 def repair(rid):
@@ -47,9 +49,9 @@ def repair(rid):
         abort(404)
     if current_user.role < 1 or r.bt_user_id != current_user.id:
         abort(403)
-    if r.status != 1:
+    if r.status != 2:
         return jsonify({"result_code": -1, "err_msg": "current status err"})
-    r.status = 2
+    r.status = 3
     try:
         db.session.add(r)
         db.session.commit()
@@ -57,7 +59,7 @@ def repair(rid):
         abort(500)
     return jsonify({"result_code": 1, "err_msg": "sucess"})
 
-# 完成 status=3
+# 完成,已修好 status=4
 @bp.route('finish/<int:rid>/')
 @login_required
 def finish(rid):
@@ -66,12 +68,12 @@ def finish(rid):
         abort(404)
     if current_user.role < 1 or r.bt_user_id != current_user.id:
         abort(403)
-    if r.status != 2:
+    if r.status != 3:
         return jsonify({
             "result_code": -1,
             "err_msg": "current status err"
         })
-    r.status = 3
+    r.status = 4
     r.solved = True
     try:
         db.session.add(r)
@@ -83,7 +85,7 @@ def finish(rid):
         "err_msg": "sucess"
     })
 
-# 失败完成 status=
+# 失败完成 status=4
 @bp.route('unfinish/<int:rid>/')
 @login_required
 def un_finish(rid):
@@ -92,7 +94,7 @@ def un_finish(rid):
         abort(404)
     if current_user.role < 1 or r.bt_user_id != current_user.id:
         abort(403)
-    if r.status != 2:
+    if r.status != 3:
         return jsonify({
             "result_code": -1,
             "err_msg": "current status err"
@@ -116,7 +118,7 @@ def un_finish(rid):
 def unerder_reservations():
     if current_user.role < 1:
         abort(403)
-    rs = Reservation.query.filter_by(status=0)
+    rs = Reservation.query.filter_by(status=1)
     res = []
     for r in rs:
         u = User.query.filter_by(id=r.user_id).first()
