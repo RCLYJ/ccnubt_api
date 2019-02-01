@@ -1,10 +1,9 @@
 from flask import Flask
-from ccnubt import  login_manager
+from ccnubt import login_manager
 from config import config
 from ccnubt.model import db
 
 app = Flask(__name__)
-
 
 from ccnubt import auth
 app.register_blueprint(auth.bp)
@@ -20,5 +19,8 @@ app.config.from_object(config['development'])
 db.init_app(app)
 login_manager.init_app(app)
 
+
+
 if __name__ == '__main__':
+
     app.run()

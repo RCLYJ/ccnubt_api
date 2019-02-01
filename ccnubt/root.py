@@ -5,14 +5,19 @@ from flask_login import login_required, login_user, current_user
 import json, os, hashlib
 from datetime import datetime
 from . import store
-import time
+from sqlalchemy import desc, and_, func
 
 bp = Blueprint('root', __name__, url_prefix='/root')
-from sqlalchemy import desc, and_, func
+
 
 
 @bp.route('login/', methods=['POST'])
 def root_login():
+    '''
+
+    :return:
+    '''
+
     json_data = json.loads(request.data)
     username = json_data.get('username')
     password = json_data.get('password')
@@ -34,7 +39,19 @@ def root_login():
 def root_user():
     if current_user.role != 10:
         abort(403)
-    users = User.query.filter(User.role != 10).all()
+    try:
+        page = int(request.args.get('page'))
+    except:
+        page = 1
+    try:
+        role = int(request.args.get('role'))
+    except:
+        role = 3
+    pagesize = 20
+    role_set = [0,1] if role==3 else [role,]
+    us = User.query.filter(and_(User.role.in_(role_set), User.enable==True))
+    users = us.limit(pagesize).offset(pagesize * (page - 1))
+    total = us.count()
     user_list = []
     for u in users:
         user_list.append({
@@ -49,7 +66,8 @@ def root_user():
         })
     return jsonify({
         "result_code": 1,
-        "users_list": user_list
+        "users_list": user_list,
+        "total": total
     })
 
 
@@ -102,12 +120,12 @@ def root_reservation():
     except:
         d_from = datetime.fromtimestamp(0)
         d_to = datetime.now()
-    pagesize = 15
+    pagesize = 20
     rs = Reservation.query.filter(and_(Reservation.create_time>=d_from, Reservation.create_time<=d_to))
     rs_data = rs.order_by(desc(Reservation.id)).limit(pagesize).offset(pagesize*(page-1)).all()
     total = rs.count()
     r_data = []
-    print(rs_data)
+    # print(rs_data)
     for r in rs_data:
         u = User.query.filter_by(id=r.user_id).first()
         info = {

@@ -69,7 +69,7 @@ def confirm_reservation(rid):
         abort(403)
     if r.status != 4:
         return jsonify({
-            "result_coe": -1,
+            "result_code": -1,
             "err_msg": "can not confirm"
         })
     r.status = 5
