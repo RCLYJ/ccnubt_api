@@ -2,7 +2,7 @@
 from flask import jsonify, request, json, abort
 from flask_login import login_required, current_user
 from ..model import Reservation, User, Activity, db
-from datetime import datetime
+from datetime import datetime, timedelta
 from . import bp
 from sqlalchemy import and_, desc
 from ccnubt import store
@@ -14,13 +14,26 @@ import random
 def new_reservation():
     json_data = json.loads(request.data)
     uid = current_user.id
+    # 查看是否有未完成订单
     r = Reservation.query.filter_by(user_id=uid).\
-        filter(and_(Reservation.status < 6, Reservation.status >= 0)).first()
+        filter(and_(Reservation.status < 6, Reservation.status > 0)).first()
     if r:
         return jsonify({
             "result_code": 2,
             "err_msg": "exist reservation unfinished"
         })
+    # 一天内超过10个取消订单,禁用用户
+    d = datetime.utcnow() - timedelta(days=1)
+    r = Reservation.query.filter(and_(Reservation.create_time >= d, Reservation.status==0)).count()
+    if r >= 10:
+        u = current_user
+        u.active = False
+    try:
+        db.session.add(u)
+        db.session.commit()
+    except:
+        db.session.rollback()
+    # 添加订单
     r = Reservation()
     r.user_id = current_user.id
     r.detail = json_data.get("detail")
@@ -83,13 +96,6 @@ def confirm_reservation(rid):
 
 
 # 确认 status=6
-'''
-{
-  "score": ,
-  "reservation": 
-}
-'''
-
 @bp.route('evaluate/<int:rid>/', methods=['POST'])
 @login_required
 def evaluate_reservation(rid):
