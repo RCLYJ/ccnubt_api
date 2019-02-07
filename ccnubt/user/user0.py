@@ -12,6 +12,32 @@ import random
 @bp.route('reserve/', methods=['POST'])
 @login_required
 def new_reservation():
+    '''新订单
+@@@
+## Arg:
+    api_key: api_key
+## Data:
+```
+{
+    detail: 问题描述,
+    formid: 小程序formid
+}
+```
+## Return
+```
+{
+    result_code: 状态码,
+    err_msg: 错误信息
+}
+```
+### result_code
+|code|err_msg|detail|
+|--|---|---|
+|1|success|成功|
+|2|exist unfinished reservation|存在未完成订单|
+|-1|invalid data|数据不合法|
+@@@
+    '''
     json_data = json.loads(request.data)
     uid = current_user.id
     # 查看是否有未完成订单
@@ -20,7 +46,7 @@ def new_reservation():
     if r:
         return jsonify({
             "result_code": 2,
-            "err_msg": "exist reservation unfinished"
+            "err_msg": "exist unfinished reservation"
         })
     # 添加订单
     r = Reservation()
@@ -39,13 +65,35 @@ def new_reservation():
 
     return jsonify({
         "result_code": 1,
-        "msg": "sucess"
+        "err_msg": "sucess"
     })
 
 # 取消订单 status=0
 @bp.route('cancel/<int:rid>/')
 @login_required
 def cancel_reservation(rid):
+    '''取消订单
+@@@
+## Arg:
+    api_key: api_key
+
+
+## Return
+```
+{
+    result_code: 状态码,
+    err_msg: 错误信息
+}
+```
+### result_code
+|code|err_msg|detail|
+|--|---|---|
+|1|success|成功|
+|403| |用户不是订单所有者|
+|401| |用户被禁用|
+|-1|can not cancel|当前订单不可取消|
+@@@
+    '''
     r = Reservation.query.filter_by(id=rid).first()
     if not r or r.user_id != current_user.id:
         abort(403)
@@ -72,17 +120,35 @@ def cancel_reservation(rid):
         except:
             db.session.rollback()
             abort(500)
-        abort(403)
+        abort(401)
 
     return jsonify({
         "result_code": 1,
-        "msg": "cancel sucessfully"
+        "err_msg": "success"
     })
 
 # 确认 status=5
 @bp.route('confirm/<int:rid>/')
 @login_required
 def confirm_reservation(rid):
+    '''确认订单
+@@@
+## Param
+rid: 订单号
+## Return
+```
+{
+    result_code: 状态码,
+    err_msg: 错误信息
+}
+```
+### result_code
+|code|err_msg|detail|
+|--|---|---|
+|1|success|成功取消|
+|-1|can not confirm|订单状态错误,不能取消|
+@@@
+    '''
     r = Reservation.query.filter_by(id=rid).first()
     if not r or r.user_id != current_user.id:
         abort(403)
@@ -97,14 +163,40 @@ def confirm_reservation(rid):
     db.session.commit()
     return jsonify({
         "result_code": 1,
-        "msg": "confirm sucessfully"
+        "err_msg": "success"
     })
 
 
-# 确认 status=6
+# 评价 status=6
 @bp.route('evaluate/<int:rid>/', methods=['POST'])
 @login_required
 def evaluate_reservation(rid):
+    '''评价
+@@@
+## Param
+rid: 订单号
+## Data(json)
+```
+{
+    "score": 分数(int),
+    "evaluation: 评价(string)
+}
+```
+
+## Return
+```
+{
+    result_code: 状态码,
+    err_msg: 错误信息
+}
+```
+### result_code
+|code|err_msg|detail|
+|--|---|---|
+|1|success|评价成功|
+|-1|can not evaluate|订单状态错误,不能评价|
+@@@
+    '''
     json_data = json.loads(request.data)
     r = Reservation.query.filter_by(id=rid).first()
     if not r or r.user_id != current_user.id:
@@ -122,18 +214,43 @@ def evaluate_reservation(rid):
         db.session.commit()
     except:
         db.session.rollback()
-        return jsonify({
-            "result_code": -1,
-            "err_msg": "invalid data"
-        })
+        abort(500)
     return jsonify({
         "result_code": 1,
-        "msg": "evaluation sucessfully"
+        "err_msg": "success"
     })
 
 @bp.route('myreservation/')
 @login_required
-def my_reservation():
+def user_reservation():
+    '''用户查看订单
+@@@
+## Return
+```
+{
+    "result_code": 1,
+    "evaluations": [
+        {
+            "create_time": "工单创建时间",
+            "detail": "问题描述",
+            "evaluation": "用户评价",
+            "finish_time": "用户确认完成时间",
+            "id": 工单号,
+            "status": 工单状态,
+            "score": 评分,
+            "bt_info": null 或 {
+                "name": "xxx",
+                "phone": "xxx",
+                "qq": "xxx",
+                "sex": "male"/"female"
+            }
+        },
+        .....
+    ]
+}
+```
+@@@
+    '''
     id = current_user.id
     rs = db.session.query(Reservation).filter_by(user_id=id).order_by(desc(Reservation.id)).all()
     r_data = []
@@ -167,6 +284,25 @@ def my_reservation():
 @bp.route('activity/')
 @login_required
 def activity():
+    '''查看活动
+@@@
+## Return
+```
+{
+    result_code: 1,
+    activities: [{
+        title: 活动名,
+        start_time: 开始时间,
+        end_time: 结束时间,
+        content: 内容,
+        pos: 地点
+    },
+    ...
+    ]
+}
+```
+@@@
+    '''
     now = datetime.utcnow()
     a = Activity.query.filter(Activity.end_time >= now).order_by(desc(Activity.id)).all()
     acs = []
