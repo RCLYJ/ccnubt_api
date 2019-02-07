@@ -48,14 +48,16 @@ def load_user_from_request(request):
         user = User.query.filter_by(openid=openid).first()
         # print(user)
         if user:
-            return user
-    api_key = request.headers.get('Authorization')
-    if api_key:
-        user = User.query.filter_by(api_key=api_key).first()
-        if user:
             if not user.active:
-                return False
+                return None
             return user
+    # api_key = request.headers.get('Authorization')
+    # if api_key:
+    #     user = User.query.filter_by(api_key=api_key).first()
+    #     if user:
+    #         if not user.active:
+    #             return False
+    #         return user
     return None
 
 

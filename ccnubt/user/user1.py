@@ -200,7 +200,7 @@ def transfer(id):
     # print(id)
     if not r or r.bt_user_id != u.id:
         abort(404)
-    code = "".join(random.sample("0123456789", 7))
+    code = "".join(random.sample("0123456789", 8))
     store.set(code, r.id, 60 * 5)
     return jsonify({
         "result_code": 1,
@@ -233,7 +233,8 @@ def receive():
 def summary():
     today = datetime.today()
     first_day = datetime(today.year, today.month, 1, 0, 0, 0)
-    sub = db.session.query(Reservation).filter(and_(Reservation.create_time>=first_day, Reservation.status==6)).subquery()
+    sub = db.session.query(Reservation).\
+        filter(and_(Reservation.create_time>=first_day, Reservation.status==6)).subquery()
     rs = db.session.query(sub.c.bt_user_id, User.name,func.count('*'), func.avg(sub.c.score)).\
         join(User, User.id==sub.c.bt_user_id).\
         group_by(User.id).all()

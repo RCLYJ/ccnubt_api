@@ -54,7 +54,7 @@ def login():
             }
         }
     elif not user.active:
-        abort(403)
+        abort(401)
     elif not user.enable:
         resp_data = {
             "result_code": 2,  # 用户未注册
@@ -129,6 +129,12 @@ def register():
 def test():
     return jsonify({
         "result_code": 1
+    })
+@app.errorhandler(401)
+def err401(e):
+    return jsonify({
+        "result_code": 401,
+        "err_msg": "permission denied"
     })
 
 @app.errorhandler(403)
