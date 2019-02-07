@@ -48,7 +48,7 @@ def send_msg(rid):
                     "value": bu.phone
                 },
                 "keyword4": {
-                    "value": "qq"
+                    "value": bu.qq
                 }
             }
         })
