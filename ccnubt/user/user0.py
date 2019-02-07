@@ -22,17 +22,6 @@ def new_reservation():
             "result_code": 2,
             "err_msg": "exist reservation unfinished"
         })
-    # 一天内超过10个取消订单,禁用用户
-    d = datetime.utcnow() - timedelta(days=1)
-    r = Reservation.query.filter(and_(Reservation.create_time >= d, Reservation.status==0)).count()
-    if r >= 10:
-        u = current_user
-        u.active = False
-    try:
-        db.session.add(u)
-        db.session.commit()
-    except:
-        db.session.rollback()
     # 添加订单
     r = Reservation()
     r.user_id = current_user.id
@@ -68,6 +57,23 @@ def cancel_reservation(rid):
     r.status = 0
     db.session.add(r)
     db.session.commit()
+
+    # 一天内超过10个取消订单,禁用用户
+    d = datetime.utcnow() - timedelta(days=1)
+    rc = Reservation.query.filter_by(user_id=current_user.id).\
+            filter(and_(Reservation.create_time >= d, Reservation.status == 0)).count()
+    ##print(rc)
+    if rc >= 10:
+        u = current_user
+        u.active = False
+        try:
+            db.session.add(u)
+            db.session.commit()
+        except:
+            db.session.rollback()
+            abort(500)
+        abort(403)
+
     return jsonify({
         "result_code": 1,
         "msg": "cancel sucessfully"
