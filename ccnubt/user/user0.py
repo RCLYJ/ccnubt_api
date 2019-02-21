@@ -11,26 +11,26 @@ import random
 # status: 0取消 1待接单 2已接单 3维修中 4完成，待确认 5已确认，待评价 6结束
 @bp.route('reserve/', methods=['POST'])
 @login_required
-def new_reservation():
+def user_new_reservation():
     '''新订单
 @@@
-## Arg:
+#### Arg:
     api_key: api_key
-## Data:
+#### Data:
 ```
 {
     detail: 问题描述,
     formid: 小程序formid
 }
 ```
-## Return
+#### Return
 ```
 {
     result_code: 状态码,
     err_msg: 错误信息
 }
 ```
-### result_code
+##### result_code
 |code|err_msg|detail|
 |--|---|---|
 |1|success|成功|
@@ -71,21 +71,21 @@ def new_reservation():
 # 取消订单 status=0
 @bp.route('cancel/<int:rid>/')
 @login_required
-def cancel_reservation(rid):
+def user_cancel_reservation(rid):
     '''取消订单
 @@@
-## Arg:
+#### Arg:
     api_key: api_key
 
 
-## Return
+#### Return
 ```
 {
     result_code: 状态码,
     err_msg: 错误信息
 }
 ```
-### result_code
+##### result_code
 |code|err_msg|detail|
 |--|---|---|
 |1|success|成功|
@@ -111,7 +111,7 @@ def cancel_reservation(rid):
     rc = Reservation.query.filter_by(user_id=current_user.id).\
             filter(and_(Reservation.create_time >= d, Reservation.status == 0)).count()
     ##print(rc)
-    if rc >= 10:
+    if rc >= 5:
         u = current_user
         u.active = False
         try:
@@ -130,19 +130,19 @@ def cancel_reservation(rid):
 # 确认 status=5
 @bp.route('confirm/<int:rid>/')
 @login_required
-def confirm_reservation(rid):
+def user_confirm_reservation(rid):
     '''确认订单
 @@@
-## Param
+#### Param
 rid: 订单号
-## Return
+#### Return
 ```
 {
     result_code: 状态码,
     err_msg: 错误信息
 }
 ```
-### result_code
+##### result_code
 |code|err_msg|detail|
 |--|---|---|
 |1|success|成功取消|
@@ -170,12 +170,12 @@ rid: 订单号
 # 评价 status=6
 @bp.route('evaluate/<int:rid>/', methods=['POST'])
 @login_required
-def evaluate_reservation(rid):
+def user_evaluate_reservation(rid):
     '''评价
 @@@
-## Param
+#### Param
 rid: 订单号
-## Data(json)
+#### Data(json)
 ```
 {
     "score": 分数(int),
@@ -183,14 +183,14 @@ rid: 订单号
 }
 ```
 
-## Return
+#### Return
 ```
 {
     result_code: 状态码,
     err_msg: 错误信息
 }
 ```
-### result_code
+##### result_code
 |code|err_msg|detail|
 |--|---|---|
 |1|success|评价成功|
@@ -225,7 +225,7 @@ rid: 订单号
 def user_reservation():
     '''用户查看订单
 @@@
-## Return
+#### Return
 ```
 {
     "result_code": 1,
@@ -286,7 +286,7 @@ def user_reservation():
 def activity():
     '''查看活动
 @@@
-## Return
+#### Return
 ```
 {
     result_code: 1,
@@ -321,7 +321,7 @@ def activity():
 
 
 @bp.route('reservecode/', methods=['GET', 'POST'])
-def reserve_code():
+def user_reserve_code():
     if request.method == 'POST':
         json_data = json.loads(request.data)
         code = json_data.get("code")
@@ -333,7 +333,7 @@ def reserve_code():
             abort(404)
         bt_uid = int(bt_uid)
         r = Reservation()
-        r.status = 1
+        r.status = 2
         r.bt_user_id = bt_uid
         r.detail = detail
         r.user_id = current_user.id

@@ -1,11 +1,12 @@
 # coding:utf-8
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, jsonify, request, abort, make_response, send_from_directory
 from .model import User, Reservation, Activity,db
 from flask_login import login_required, login_user, current_user
 import json, os, hashlib
 from datetime import datetime
 from . import store
 from sqlalchemy import desc, and_, func
+import xlwt
 
 bp = Blueprint('root', __name__, url_prefix='/root')
 
@@ -13,24 +14,55 @@ bp = Blueprint('root', __name__, url_prefix='/root')
 
 @bp.route('login/', methods=['POST'])
 def root_login():
-    '''
-
-    :return:
-    '''
-
     json_data = json.loads(request.data)
     username = json_data.get('username')
     password = json_data.get('password')
     u = User.query.filter_by(openid=username).first()
-    if not u or u.api_key != password or u.role != 10:
+
+    hash_password = hashlib.md5(password.encode('utf8')).hexdigest()
+    if not u or u.api_key != hash_password or u.role != 10 or not u.active:
         abort(403)
     api_key = hashlib.md5(os.urandom(64)).hexdigest()
     # print(api_key)
-    store.set(api_key, username)
+    store.set(api_key, username, 60*60)
     return jsonify({
         "result_code": 1,
-        "msg": "login sucess",
+        "msg": "login success",
         "api_key": api_key
+    })
+
+
+@bp.route('addadmin/', methods=['post'])
+def root_add_admin():
+    json_data = json.loads(request.data)
+    token = "addadmin" + request.args.get('token')
+    if not token or not store.get(token):
+        abort(403)
+    store.delete(token)
+    username = json_data.get("username")
+    password = json_data.get("password")
+    name = json_data.get("name")
+    if User.query.filter(User.openid == username).all():
+        return jsonify({
+            "result_code": 403,
+            "err_msg": 'username exists'
+        })
+    u = User()
+    u.openid = username
+    u.api_key = hashlib.md5(password.encode('utf8')).hexdigest()
+    u.role = 10
+    u.name = name
+    u.active = False
+    u.enable = 1
+    try:
+        db.session.add(u)
+        db.session.commit()
+    except:
+        db.session.rollback()
+        abort(500)
+    return jsonify({
+        "result_code": 1,
+        "err_msg": "success"
     })
 
 
@@ -263,7 +295,7 @@ def root_summary():
             "name": r[1],
             "avg_score": round(float(r[3]), 2),
             "count": r[2],
-            "score": round(r[2] / (1 + m) * 50 + float(r[3]) * 10.0, 2)
+            "score": round(r[2] / m * 50 + float(r[3]) * 10.0, 2)
         })
     if data:
         data.sort(key=lambda obj: (obj.get("score")), reverse=True)
@@ -272,5 +304,26 @@ def root_summary():
         "data": data
     })
 
-
-
+@bp.route('export/user/')
+@login_required
+def root_export_user():
+    if current_user.role != 10:
+        abort(403)
+    us = User.query.filter(and_(User.enable == True, User.role!=10)).order_by(desc(User.role)).all()
+    workbook = xlwt.Workbook(encoding='utf8')
+    worksheet = workbook.add_sheet('用户')
+    row0 = ['id', '姓名', '性别', '手机号码', 'QQ', '角色']
+    for i in range(0, len(row0)):
+        worksheet.write(0, i, row0[i])
+    for i in range(0, len(us)):
+        worksheet.write(i + 1, 0, us[i].id)
+        worksheet.write(i + 1, 1, us[i].name)
+        worksheet.write(i + 1, 2, '男' if (us[i].sex == 'male') else '女')
+        worksheet.write(i + 1, 3, us[i].phone)
+        worksheet.write(i + 1, 4, us[i].qq)
+        worksheet.write(i + 1, 5, '用户' if(not us[i].role) else '队员')
+    workbook.save('/tmp/user.xls')
+    resp = make_response(send_from_directory('/tmp', 'user.xls', as_attachment=True))
+    resp.headers["Content-Type"] = 'application/x-download;charset=utf-8'
+    resp.headers["Content-Disposition"] = "attachment; filename=user.xls"
+    return resp

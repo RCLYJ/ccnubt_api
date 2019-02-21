@@ -16,7 +16,27 @@ from datetime import datetime
 # 接单status=2
 @bp.route('order/<int:rid>/')
 @login_required
-def order(rid):
+def bt_order(rid):
+    '''接单
+@@@
+### Param
+rid: 订单表号
+#### Return
+```
+{
+    result_code: x,
+    err_msg
+}
+```
+##### Result_code
+|result_code|err_msg|detail|
+|-----|----|-----|
+|1|success|成功|
+|403| |没有权限|
+|404| |订单不存在|
+|-1|current status err|订单状态错误|
+@@@
+    '''
     if current_user.role < 1:
         abort(403)
     r = Reservation.query.filter_by(id=rid).first()
@@ -43,7 +63,26 @@ def order(rid):
 # 维修status=3
 @bp.route('repair/<int:rid>/')
 @login_required
-def repair(rid):
+def bt_repair(rid):
+    '''改为维修中状态
+@@@
+#### Param
+rid:订单编号
+#### Return
+```
+{
+    result_code:  x,
+    err_msg: x
+```
+##### result_code
+|result_code|err_msg|detail|
+|----------|----|-------|
+|1|success|成功|
+|404| |订单不存在|
+|403| |没有权限,非队员或非本人接单|
+|-1|current status err|当前订单状态错误|
+@@@
+    '''
     r = Reservation.query.filter_by(id=rid).first()
     if not r:
         abort(404)
@@ -57,12 +96,42 @@ def repair(rid):
         db.session.commit()
     except:
         abort(500)
-    return jsonify({"result_code": 1, "err_msg": "sucess"})
+    return jsonify({"result_code": 1, "err_msg": "success"})
+
 
 # 完成,已修好 status=4
 @bp.route('finish/<int:rid>/')
 @login_required
-def finish(rid):
+def bt_finish(rid):
+    '''维修完成
+@@@
+#### Args
+|参数|内容|
+|---|----|
+|api_key|api_key|
+|rid|订单编号|
+|solved|true解决, false未解决(默认)|
+#### Return
+```
+{
+    result_code: 状态码,
+    err_msg: 错误信息
+}
+```
+##### result_code
+|code|err_msg|detail|
+|--|---|---|
+|1|success|成功｜
+|404|  |订单不存在|
+|403|  |没有权限|
+|-1|current status err|当前状态错误|
+
+@@@
+    '''
+    s = request.args.get('solved')
+    solved = False
+    if s == 'true':
+        solved = True
     r = Reservation.query.filter_by(id=rid).first()
     if not r:
         abort(404)
@@ -74,7 +143,7 @@ def finish(rid):
             "err_msg": "current status err"
         })
     r.status = 4
-    r.solved = True
+    r.solved = solved
     try:
         db.session.add(r)
         db.session.commit()
@@ -85,37 +154,59 @@ def finish(rid):
         "err_msg": "sucess"
     })
 
-# 失败完成 status=4
-@bp.route('unfinish/<int:rid>/')
-@login_required
-def un_finish(rid):
-    r = Reservation.query.filter_by(id=rid).first()
-    if not r:
-        abort(404)
-    if current_user.role < 1 or r.bt_user_id != current_user.id:
-        abort(403)
-    if r.status != 3:
-        return jsonify({
-            "result_code": -1,
-            "err_msg": "current status err"
-        })
-    r.status = 4
-    r.solved = False
-    try:
-        db.session.add(r)
-        db.session.commit()
-    except:
-        abort(500)
-    return jsonify({
-        "result_code": 1,
-        "err_msg": "sucess"
-    })
+# # 失败完成 status=4
+# @bp.route('unfinish/<int:rid>/')
+# @login_required
+# def un_finish(rid):
+#     r = Reservation.query.filter_by(id=rid).first()
+#     if not r:
+#         abort(404)
+#     if current_user.role < 1 or r.bt_user_id != current_user.id:
+#         abort(403)
+#     if r.status != 3:
+#         return jsonify({
+#             "result_code": -1,
+#             "err_msg": "current status err"
+#         })
+#     r.status = 4
+#     r.solved = False
+#     try:
+#         db.session.add(r)
+#         db.session.commit()
+#     except:
+#         abort(500)
+#     return jsonify({
+#         "result_code": 1,
+#         "err_msg": "sucess"
+#     })
 
 
 # 未接订单
 @bp.route('unorder/')
 @login_required
-def unerder_reservations():
+def bt_unorder_reservations():
+    '''查看未接订单
+@@@
+#### Return
+```
+{
+    result_code: 1,
+    reservations: [{
+        id: 订单编号,
+        detail: 问题描述,
+        create_time: 创建时间,
+        user_info: {
+            name: 姓名,
+            sex: 性别,
+            phone: 手机,
+            qq: QQ号码
+        }
+    },
+    ....]
+}
+```
+@@@
+    '''
     if current_user.role < 1:
         abort(403)
     rs = Reservation.query.filter_by(status=1)
@@ -141,7 +232,13 @@ def unerder_reservations():
 
 @bp.route('myorder/')
 @login_required
-def my_ordered_reservation():
+def bt_ordered_reservation():
+    '''查看已接订单
+@@@
+#### Return
+
+@@@
+    '''
     if current_user.role < 1:
         abort(403)
     rs = db.session.query(Reservation).filter_by(bt_user_id=current_user.id).order_by(desc(Reservation.id)).all()
@@ -173,7 +270,7 @@ def my_ordered_reservation():
 
 # 生成接单码
 @bp.route('mycode/')
-def my_code():
+def bt_code():
     code = request.args.get("code")
     # print(code)
     if code:
@@ -191,7 +288,7 @@ def my_code():
 
 
 @bp.route('transfer/<int:id>/')
-def transfer(id):
+def bt_transfer(id):
     u = current_user
     id = int(id)
     if u.role != 1:
@@ -209,7 +306,7 @@ def transfer(id):
 
 
 @bp.route('receive/')
-def receive():
+def bt_receive():
     u = current_user
     if u.role != 1:
         abort(403)
@@ -219,6 +316,7 @@ def receive():
         abort(404)
     r = Reservation.query.filter_by(id=int(rid)).first()
     r.bt_user_id = u.id
+    store.delete(code)
     try:
         db.session.add(r)
         db.session.commit()
@@ -230,7 +328,25 @@ def receive():
     })
 
 @bp.route('summary/')
-def summary():
+def bt_summary():
+    '''查看队员排名
+@@@
+#### Return
+```
+{
+    result_code: 1,
+    data: [{
+        name: 队员姓名,
+        avg_score: 平均分,
+        count: 接单量,
+        score: 综合分
+        },
+        ...
+    ]
+}
+```
+@@@
+    '''
     today = datetime.today()
     first_day = datetime(today.year, today.month, 1, 0, 0, 0)
     sub = db.session.query(Reservation).\
@@ -248,7 +364,7 @@ def summary():
             "name": r[1],
             "avg_score": round(float(r[3]),2),
             "count": r[2],
-            "score": round(r[2]/(1+m)*50 + float(r[3])*10.0, 2)
+            "score": round(r[2]/m *50 + float(r[3])*10.0, 2)
         })
     if data:
         data.sort(key=lambda obj: (obj.get("score")),reverse=True)
