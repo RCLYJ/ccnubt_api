@@ -1,8 +1,11 @@
 import requests
 from ccnubt import store
 import json
-from ccnubt.model import User, Reservation
+from ccnubt.model import User, Reservation, db
 from wsgi import app
+import smtplib
+from email.mime.text import MIMEText
+from email.header import Header
 
 def send_msg(rid):
     with app.app_context():
@@ -53,6 +56,50 @@ def send_msg(rid):
             }
         })
         print(res.text)
+
+
+def send_email(rid):
+    with app.app_context():
+        r = Reservation.query.filter_by(id=rid).first()
+        if r.formid == 'send':
+            return
+        print(r)
+        u = User.query.filter_by(id=r.user_id).first()
+        bu = User.query.filter_by(id=r.bt_user_id).first()
+        print(u)
+        mail_host = app.config.get('MAIL_HOST')
+        mail_user = app.config.get('MAIL_USER')
+        mail_pass = app.config.get('MAIL_PASS')
+
+        to_addr = u.qq+"@qq.com"
+        from_addr = 'yuanchenglei0530@qq.com'
+        content = '''%s:
+        您好！
+        您的订单（订单号：%s, 维修状态： 维修%s）已经完成，请您对队员%s的服务做出评价。
+        奔腾服务，竭诚为您！
+        
+        华中师范大学奔腾服务队
+        ''' % (u.name, r.id, '成功' if r.solved else'失败', bu.name)
+
+        msg = MIMEText(content, 'plain', 'utf-8')
+        msg['From'] = Header('奔腾服务队<ccnubt.club@qq.com>', 'utf-8')
+        msg['To'] = Header(u.name+'%s@qq.com' % u.qq, 'utf-8')
+        subject = '华中师范大学奔腾服务队维修反馈'
+        msg['Subject'] = Header(subject, 'utf-8')
+
+        try:
+            smtp = smtplib.SMTP_SSL(mail_host)
+            smtp.login(mail_user, mail_pass)
+            print('login')
+            smtp.sendmail(from_addr, to_addr, msg.as_string())
+        except:
+            print('fail')
+        r.formid = 'send'
+        try:
+            db.session.add(r)
+            db.session.commit()
+        except:
+            db.session.rollback()
 
 
 

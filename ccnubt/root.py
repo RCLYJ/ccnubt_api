@@ -7,6 +7,9 @@ from datetime import datetime
 from . import store
 from sqlalchemy import desc, and_, func
 import xlwt
+from concurrent.futures import ThreadPoolExecutor
+from .user.send_msg import send_email
+
 
 bp = Blueprint('root', __name__, url_prefix='/root')
 
@@ -54,6 +57,7 @@ def root_add_admin():
     u.name = name
     u.active = False
     u.enable = 1
+    print(u)
     try:
         db.session.add(u)
         db.session.commit()
@@ -137,6 +141,54 @@ def auth_role():
         "result_code": 1
     })
 
+@bp.route('user/sendmail/')
+def root_send_mail():
+    # print('send')
+    if current_user.role != 10:
+        abort(403)
+    rid = request.args.get('rid')
+    # print('rid')
+    # print(rid)
+    try:
+        rid = int(rid)
+    except:
+        abort(404)
+    with ThreadPoolExecutor(1) as executor:
+        t = executor.submit(send_email, rid=rid)
+        # print(t.result())
+    return jsonify({
+        "result_code": 1,
+        "err_msg": 'success'
+    })
+
+# @bp.route('user/del/')
+# def root_user_disable():
+#     if current_user.role != 10:
+#         abort(403)
+#     id = request.args.get('id')
+#     if not id:
+#         abort(404)
+#     u = User.query.filter_by(id=id).first()
+#     print(u)
+#     if not u:
+#         abort(404)
+#
+#     rs = Reservation.query.filter_by(user_id=id).all()
+#     db.session.delete(rs)
+#     db.session.delete(u)
+#     db.session.commit()
+#     # try:
+#     #     db.session.delete(rs)
+#     #     db.session.delete(u)
+#     #     db.session.commit()
+#     # except:
+#     #     db.session.rollback()
+#     #     abort(500)
+#     return jsonify({
+#         "result_code": 1
+#     })
+
+
 @bp.route('reservation/')
 @login_required
 def root_reservation():
@@ -185,7 +237,8 @@ def root_reservation():
             "evaluation": r.evaluation,
             "solved": r.solved,
             "user_info": info,
-            "bt_user_info": bt_info
+            "bt_user_info": bt_info,
+            "formid": r.formid
         })
     # time.sleep(3)
     return jsonify({
