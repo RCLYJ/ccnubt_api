@@ -5,7 +5,8 @@ from .model import User, db
 import click
 import xlwt
 
-cmd = AppGroup('admin')
+admin_cmd = AppGroup('admin')
+
 
 
 @cmd.command('add')

@@ -6,10 +6,11 @@ from wsgi import app
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
+from email.utils import parseaddr, formataddr
 
 def send_msg(rid):
     with app.app_context():
-        print(User.query.all())
+        # print(User.query.all())
         token_url = 'https://api.weixin.qq.com/cgi-bin/token'
         token = store.get('access_token')
         if token:
@@ -29,8 +30,8 @@ def send_msg(rid):
                 store.set("access_token", token, 60 * 60 * 2)
             except:
                 return
-        print('to')
-        print(token)
+        # print('to')
+        # print(token)
         r = Reservation.query.filter_by(id=rid).first()
         u = User.query.filter_by(id=r.user_id).first()
         bu = User.query.filter_by(id=r.bt_user_id).first()
@@ -55,7 +56,9 @@ def send_msg(rid):
                 }
             }
         })
-        print(res.text)
+        # print(res.text)
+
+
 
 
 def send_email(rid):
@@ -63,7 +66,7 @@ def send_email(rid):
         r = Reservation.query.filter_by(id=rid).first()
         if r.formid == 'send':
             return
-        print(r)
+        # print(r)
         u = User.query.filter_by(id=r.user_id).first()
         bu = User.query.filter_by(id=r.bt_user_id).first()
         print(u)
@@ -72,18 +75,20 @@ def send_email(rid):
         mail_pass = app.config.get('MAIL_PASS')
 
         to_addr = u.qq+"@qq.com"
-        from_addr = 'yuanchenglei0530@qq.com'
+        from_addr = mail_user
+        # from_addr = mail_user
         content = '''%s:
         您好！
         您的订单（订单号：%s, 维修状态： 维修%s）已经完成，请您对队员%s的服务做出评价。
         奔腾服务，竭诚为您！
         
-        华中师范大学奔腾服务队
+        奔腾服务队
         ''' % (u.name, r.id, '成功' if r.solved else'失败', bu.name)
-
+        h_from = '奔腾服务队<ccnubt@qq.com>'
+        h_to = u.name+'<%s@qq.com>' % u.qq
         msg = MIMEText(content, 'plain', 'utf-8')
-        msg['From'] = Header('奔腾服务队<ccnubt.club@qq.com>', 'utf-8')
-        msg['To'] = Header(u.name+'%s@qq.com' % u.qq, 'utf-8')
+        msg['From'] = Header(h_from, 'utf-8')
+        msg['To'] = Header(h_to, 'utf-8')
         subject = '华中师范大学奔腾服务队维修反馈'
         msg['Subject'] = Header(subject, 'utf-8')
 
@@ -92,14 +97,16 @@ def send_email(rid):
             smtp.login(mail_user, mail_pass)
             print('login')
             smtp.sendmail(from_addr, to_addr, msg.as_string())
+            r.formid = 'send'
+            try:
+                db.session.add(r)
+                db.session.commit()
+            except:
+                db.session.rollback()
+            print('success to send email to' + h_to)
         except:
-            print('fail')
-        r.formid = 'send'
-        try:
-            db.session.add(r)
-            db.session.commit()
-        except:
-            db.session.rollback()
+            print('fail to send email to' + h_to)
+
 
 
 

@@ -3,7 +3,7 @@ from ccnubt import login_manager
 from config import config
 from ccnubt.model import db
 from flask_docs import ApiDoc
-from ccnubt.util import cmd
+from ccnubt.util import admin_cmd
 
 app = Flask(__name__)
 
@@ -23,7 +23,7 @@ login_manager.init_app(app)
 
 ApiDoc(app)
 
-app.cli.add_command(cmd)
+app.cli.add_command(admin_cmd)
 
 
 if __name__ == '__main__':
