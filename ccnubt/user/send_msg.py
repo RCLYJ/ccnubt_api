@@ -97,15 +97,16 @@ def send_email(rid):
             smtp.login(mail_user, mail_pass)
             # print('login')
             smtp.sendmail(from_addr, to_addr, msg.as_string())
-            r.formid = 'send'
-            try:
-                db.session.add(r)
-                db.session.commit()
-            except:
-                db.session.rollback()
             print('success to send email to ' + h_to)
         except:
             print('fail to send email to ' + h_to)
+
+        r.formid = 'send'
+        try:
+            db.session.add(r)
+            db.session.commit()
+        except:
+            db.session.rollback()
 
 
 
