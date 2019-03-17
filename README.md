@@ -1,7 +1,7 @@
 # 维修预约系统
 ## 前端地址
-* 微信小程序[https://github.com/ccnubt/ccnubt_api](https://github.com/ccnubt/ccnubt_api)
-* 管理后台[https://github.com/ccnubt/ccnubt_api](https://github.com/ccnubt/ccnubt_api)
+* 微信小程序[https://github.com/ccnubt/ccnubt_wx](https://github.com/ccnubt/ccnubt_wx)
+* 管理后台[https://github.com/ccnubt/ccnubt_web](https://github.com/ccnubt/ccnubt_web)
 
 ## 功能
 * 实现用户预约、取消订单、查看维修状态、评价功能接口
