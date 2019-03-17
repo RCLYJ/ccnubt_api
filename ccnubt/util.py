@@ -9,7 +9,7 @@ admin_cmd = AppGroup('admin')
 
 
 
-@cmd.command('add')
+@admin_cmd.command('add')
 def add_admin_url():
     token = hashlib.md5(os.urandom(64)).hexdigest()
     store.set("addadmin"+token, "true", 60*60)
@@ -18,14 +18,14 @@ def add_admin_url():
     print(base_url+'?token='+token)
 
 
-@cmd.command('list')
+@admin_cmd.command('list')
 def admin_list():
     us = User.query.filter(User.role==10).all()
     for u in us:
         print("id:%s name: %s active:%s" % (u.id, u.name, u.active))
 
 
-@cmd.command('verify')
+@admin_cmd.command('verify')
 @click.argument('id')
 def admin_verify(id):
     # print(id)
@@ -42,7 +42,7 @@ def admin_verify(id):
     print('success')
 
 
-@cmd.command('export_user')
+@admin_cmd.command('export_user')
 def export_user():
     us = User.query.filter(User.enable == True).all()
     workbook = xlwt.Workbook(encoding='ascii')

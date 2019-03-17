@@ -19,7 +19,7 @@ def login():
         "err_msg": ""
     }
     data = request.get_data()
-    print(data)
+    # print(data)
     try:
         json_code = json.loads(data)['code']
     except:

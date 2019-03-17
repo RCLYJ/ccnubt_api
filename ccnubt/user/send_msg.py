@@ -6,7 +6,7 @@ from wsgi import app
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
-from email.utils import parseaddr, formataddr
+
 
 def send_msg(rid):
     with app.app_context():
@@ -69,7 +69,7 @@ def send_email(rid):
         # print(r)
         u = User.query.filter_by(id=r.user_id).first()
         bu = User.query.filter_by(id=r.bt_user_id).first()
-        print(u)
+        # print(u)
         mail_host = app.config.get('MAIL_HOST')
         mail_user = app.config.get('MAIL_USER')
         mail_pass = app.config.get('MAIL_PASS')
@@ -95,7 +95,7 @@ def send_email(rid):
         try:
             smtp = smtplib.SMTP_SSL(mail_host)
             smtp.login(mail_user, mail_pass)
-            print('login')
+            # print('login')
             smtp.sendmail(from_addr, to_addr, msg.as_string())
             r.formid = 'send'
             try:
@@ -103,9 +103,9 @@ def send_email(rid):
                 db.session.commit()
             except:
                 db.session.rollback()
-            print('success to send email to' + h_to)
+            print('success to send email to ' + h_to)
         except:
-            print('fail to send email to' + h_to)
+            print('fail to send email to ' + h_to)
 
 
 
