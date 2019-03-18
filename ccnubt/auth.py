@@ -135,29 +135,29 @@ def err401(e):
     return jsonify({
         "result_code": 401,
         "err_msg": "permission denied"
-    })
+    }),401
 
 @app.errorhandler(403)
 def err403(e):
     return jsonify({
         "result_code": 403,
         "err_msg": "permission denied"
-    })
+    }),403
 
 @app.errorhandler(405)
 def err405(e):
     return jsonify({
         "result_code": 405
-    })
+    }),405
 
 @app.errorhandler(404)
 def err404(e):
     return jsonify({
         "result_code": 404
-    })
+    }),404
 
 @app.errorhandler(500)
 def err500(e):
     return jsonify({
         "result_code": 500
-    })
+    }),500

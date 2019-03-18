@@ -18,8 +18,8 @@ app.register_blueprint(user.bp)
 from ccnubt import root
 app.register_blueprint(root.bp)
 
-# app.config.from_object(config['development'])
-app.config.from_object(config['production'])
+app.config.from_object(config['development'])
+# app.config.from_object(config['production'])
 
 db.init_app(app)
 login_manager.init_app(app)
