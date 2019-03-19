@@ -145,7 +145,7 @@ rid: 订单号
 ##### result_code
 |code|err_msg|detail|
 |--|---|---|
-|1|success|成功取消|
+|1|success|成功|
 |-1|can not confirm|订单状态错误,不能取消|
 @@@
     '''
@@ -158,7 +158,6 @@ rid: 订单号
             "err_msg": "can not confirm"
         })
     r.status = 5
-    r.finish_time = datetime.utcnow()
     db.session.add(r)
     db.session.commit()
     return jsonify({

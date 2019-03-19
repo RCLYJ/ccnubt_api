@@ -144,6 +144,7 @@ def bt_finish(rid):
         })
     r.status = 4
     r.solved = solved
+    r.finish_time = datetime.utcnow()
     try:
         db.session.add(r)
         db.session.commit()
@@ -151,7 +152,7 @@ def bt_finish(rid):
         abort(500)
     return jsonify({
         "result_code": 1,
-        "err_msg": "sucess"
+        "err_msg": "success"
     })
 
 # # 失败完成 status=4

@@ -1,7 +1,7 @@
 # coding:utf-8
 from flask import Blueprint, jsonify, request, abort, make_response, send_from_directory
 from .model import User, Reservation, Activity,db
-from flask_login import login_required, login_user, current_user
+from flask_login import login_required,  current_user
 import json, os, hashlib
 from datetime import datetime
 from . import store
