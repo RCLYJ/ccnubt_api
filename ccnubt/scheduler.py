@@ -6,8 +6,8 @@ from wsgi import app
 
 def scheduler_task():
     with app.app_context():
-        print("scheduler_task: "+datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
-        date = datetime.datetime.now() - datetime.timedelta(days=3)
+        print("scheduler_task: "+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        date = datetime.datetime.now() - datetime.timedelta(days=4)
         rs = Reservation.query.\
             filter(and_(Reservation.formid == 'send', Reservation.finish_time <= date,
                                            Reservation.status >= 4, Reservation.status < 6)).all()
@@ -23,8 +23,7 @@ def scheduler_task():
                 db.session.rollback()
 
         rs = Reservation.query.\
-            filter(and_(Reservation.formid != 'send', Reservation.finish_time <= date,
-                                           Reservation.status >= 4, Reservation.status<6)).all()
+            filter(and_(Reservation.formid != 'send', Reservation.status >= 4, Reservation.status < 6)).all()
         # print(rs)
         for r in rs:
             send_email(r.id)

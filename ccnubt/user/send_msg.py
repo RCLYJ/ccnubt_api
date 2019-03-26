@@ -1,11 +1,9 @@
-import requests
 from ccnubt import store
-import json
 from ccnubt.model import User, Reservation, db
 from wsgi import app
-import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
+import datetime, json, smtplib, requests
 
 
 def send_msg(rid):
@@ -31,7 +29,7 @@ def send_msg(rid):
             except:
                 return
         # print('to')
-        # print(token)
+        print('send template message to '+u.name+datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
         r = Reservation.query.filter_by(id=rid).first()
         u = User.query.filter_by(id=r.user_id).first()
         bu = User.query.filter_by(id=r.bt_user_id).first()
@@ -57,8 +55,6 @@ def send_msg(rid):
             }
         })
         # print(res.text)
-
-
 
 
 def send_email(rid):

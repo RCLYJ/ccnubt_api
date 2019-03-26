@@ -27,7 +27,7 @@ def root_login():
         abort(403)
     api_key = hashlib.md5(os.urandom(64)).hexdigest()
     # print(api_key)
-    store.set(api_key, username, 60*60)
+    store.set(api_key, username, 60*60*5)
     return jsonify({
         "result_code": 1,
         "msg": "login success",

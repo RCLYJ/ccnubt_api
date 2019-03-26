@@ -334,7 +334,7 @@ def user_reserve_code():
         r = Reservation()
         r.status = 2
         r.bt_user_id = bt_uid
-        r.detail = detail
+        r.detail = detail + '(by code)'
         r.user_id = current_user.id
         try:
             db.session.add(r)
